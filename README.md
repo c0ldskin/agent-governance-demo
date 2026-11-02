@@ -13,6 +13,15 @@ Everything runs offline on one machine, with synthetic data and a local model. T
 > **Demo-grade, not a product.** It shows the pattern so it can be explained in a few minutes. Production
 > needs hardened components (see [Honest limits](#honest-limits) and [Next step: a hardened platform](#next-step-a-hardened-platform)).
 
+## What it looks like
+
+Same agents, same poisoned letter, same model. Only the controls differ.
+
+| Without governance | With governance |
+|---|---|
+| ![Without governance: the record and the API key reach the attacker, and the case goes to an overseas model](docs/without-governance.png) | ![With governance: nothing leaked, the decision is still recorded, and 4 of 4 bypass attempts are blocked by the OS](docs/with-governance.png) |
+| 1 record leaked, 1 API key leaked, 1 case sent overseas, nothing logged | 0 leaked, 0 sent overseas, every request in the gateway log, 4/4 bypass attempts blocked |
+
 ## What the demo shows
 
 | Act | Risk (OWASP Top 10 for Agentic Applications, 2026) | Unguarded | Governed | Control that stops it |
