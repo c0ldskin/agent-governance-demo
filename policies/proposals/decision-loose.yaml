@@ -1,0 +1,20 @@
+# Decision agent for act 2, tightened: the POST-anywhere rule is removed.
+agent: decision
+label: tightened
+rules:
+  - id: decision-local-model
+    purpose: Use the local model
+    host: "127.0.0.1:11434"
+    methods: [POST]
+    paths: ["/v1/chat/completions"]
+  - id: decision-handoff
+    purpose: Hand cases to other agents through the orchestrator
+    host: "orchestrator.localhost:8783"
+    methods: [POST]
+    paths: ["/handoff"]
+  - id: decision-submit
+    purpose: Record a decision in the case registry
+    host: "registry.localhost:8781"
+    methods: [POST]
+    paths: ["/cases/*/decision"]
+    credential: case-registry

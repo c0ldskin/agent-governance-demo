@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Governance</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="title">Agent Governance</div>
+    <div class="sub">disability support card · two agents · everything runs on this laptop</div>
+  </div>
+  <div id="timer" class="timer idle"><span id="timer-agent">Ready</span><span id="timer-secs"></span></div>
+</header>
+
+<nav class="controls">
+  <button data-run="poisoned:unguarded" class="danger">Run unguarded</button>
+  <button data-run="poisoned:governed" class="safe">Run governed</button>
+  <button data-run="deputy:governed">Run confused deputy</button>
+  <button id="btn-stop">Stop agent</button>
+  <button id="btn-reset">Reset</button>
+  <span class="spacer"></span>
+  <button id="btn-presenter">Presenter mode</button>
+  <button id="btn-how">How it works</button>
+  <button id="btn-close" class="ghost">Close</button>
+</nav>
+
+<div id="presenter" class="presenter hidden">
+  <div><span class="step-no" id="p-no"></span> <span id="p-text"></span></div>
+  <div class="p-actions"><span id="p-hint"></span><button id="p-next" class="safe">Next ▶</button><button id="p-exit" class="ghost">Exit</button></div>
+</div>
+
+<div id="mode-banner" class="mode-banner hidden"></div>
+
+<main>
+  <section class="panel" id="panel-agents">
+    <h2>1 · Agents and timeline</h2>
+    <div id="feed" class="feed"><div class="empty">Press a Run button to start.</div></div>
+    <h3>Trace timeline <span class="muted" id="trace-id"></span></h3>
+    <div id="timeline" class="timeline"></div>
+  </section>
+
+  <section class="panel" id="panel-enforcement">
+    <h2>2 · Enforcement <span class="muted">from the gateway's own log</span></h2>
+    <div id="enforce" class="enforce"><div class="empty">No requests yet.</div></div>
+    <div class="boxes">
+      <div class="box ok" id="attacker-box"><div class="box-title">Attacker's listener</div><div class="box-body">Nothing received</div></div>
+      <div class="box ok" id="cloud-box"><div class="box-title">Overseas cloud model</div><div class="box-body">Nothing received</div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-policy">
+    <h2>3 · Policy <span class="muted" id="policy-commit"></span></h2>
+    <div id="proposal"></div>
+    <div id="policies"></div>
+    <h3>Governance audit</h3>
+    <div id="governance" class="governance"><div class="empty">No policy changes yet.</div></div>
+  </section>
+</main>
+
+<section id="scores" class="scores"></section>
+
+<div id="how" class="modal hidden">
+  <div class="modal-card">
+    <button class="modal-x" id="how-x">✕</button>
+    <h2>How it works</h2>
+    <p class="muted">Each layer is built here from tools already on this Mac. Step 2 replaces them with a platform such as NVIDIA OpenShell.</p>
+    <table class="layers">
+      <thead><tr><th>Layer (built here)</th><th>What it does</th><th>Equivalent in OpenShell (step 2)</th></tr></thead>
+      <tbody>
+        <tr><td><b>OS sandbox</b><br>macOS Seatbelt via <code>sandbox-exec</code>, one profile per agent</td><td>Each agent process can reach only the gateway's local port, read only its own folder, and can't read the credentials file</td><td>Per-agent sandbox (MicroVM or container)</td></tr>
+        <tr><td><b>Governance gateway</b><br>a small local HTTP proxy in Python</td><td>Every agent request goes through it; default deny; YAML policy per agent with method and path rules</td><td>Network policy with layer-7 rules</td></tr>
+        <tr><td><b>Credential broker</b><br>inside the gateway</td><td>Holds the API key and adds it only to requests the policy allows; agents never see it</td><td>Credential providers</td></tr>
+        <tr><td><b>Inference routing</b><br>inside the gateway</td><td>Model calls allowed only to the local Ollama</td><td>Inference provider routing</td></tr>
+        <tr><td><b>Policy as code</b><br>YAML in git, with a risk check</td><td>Diff, automatic flag on new destinations or credentials, human approval, commit, live reload</td><td>Policies with live updates and the policy prover</td></tr>
+        <tr><td><b>Orchestrator delegation check</b></td><td>Refuses handoffs that ask an agent to do what the requester can't</td><td>Beyond OpenShell: agent identity and delegation</td></tr>
+        <tr><td><b>Audit and traces</b></td><td>Structured log of every decision (OCSF-like JSON), plus OpenTelemetry spans per agent step, linked by trace ID</td><td>Sandbox logs (OCSF)</td></tr>
+      </tbody>
+    </table>
+    <h3>Honest limits</h3>
+    <ul class="limits">
+      <li>Seatbelt isolates processes, which is weaker than VM isolation.</li>
+      <li>Apple has deprecated <code>sandbox-exec</code>. It still works and is widely used.</li>
+      <li>The gateway is demo-grade. It shows the pattern; production uses a hardened platform. That is the bridge to step 2.</li>
+    </ul>
+    <h3>OWASP Top 10 for Agentic Applications (2026)</h3>
+    <table class="layers">
+      <tbody>
+        <tr><td>ASI01 Agent goal hijack</td><td>Act 1: a hidden instruction in an uploaded letter</td><td>OS sandbox + default-deny gateway</td></tr>
+        <tr><td>ASI03 Credential and privilege abuse</td><td>Act 1: the API key in the agent's environment · Act 2: a loose rule</td><td>Credential broker · path-level rules</td></tr>
+        <tr><td>ASI07 Inter-agent trust</td><td>Act 2: the low-privilege agent uses the high-privilege one</td><td>Delegation check on the originating identity</td></tr>
+        <tr><td>ASI09 Human oversight</td><td>Act 2: the fix is a diff, risk-checked, approved by a person</td><td>Policy as code</td></tr>
+        <tr><td>ASI08 / ASI10 Cascading failures, rogue agents</td><td>Stop button, step and request limits</td><td>Kill switch and limits</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

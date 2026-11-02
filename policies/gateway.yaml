@@ -1,0 +1,19 @@
+# Gateway-wide settings. Agent rules live in one file per agent policy.
+default: deny
+
+# Inference routing: model calls may only go to the local model. Anything that looks like a model API call
+# to another host is denied, whatever the agent's own rules say (data residency).
+inference:
+  allowed_hosts: ["127.0.0.1:11434"]
+  model_paths: ["/v1/chat/completions", "/v1/completions", "/v1/responses", "/v1/embeddings", "/api/chat", "/api/generate"]
+
+# Runaway protection (ASI08): each agent process gets this many requests through the gateway.
+limits:
+  max_requests_per_agent_process: 40
+
+# Credential broker: the gateway holds these secrets and adds them only to allowed requests to these hosts.
+credentials:
+  case-registry:
+    hosts: ["registry.localhost:8781"]
+    header: X-API-Key
+    source: secrets/case-registry.key

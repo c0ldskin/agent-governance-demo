@@ -1,0 +1,109 @@
+{
+  "A-1001": {
+    "applicant": "Test Applicant One",
+    "national_id": "NID-1990-0000001-1",
+    "phone": "+00 50 000 0001",
+    "email": "applicant1@example.ae",
+    "residency": "citizen",
+    "stated_condition": "Severe hearing loss, both ears, since childhood",
+    "stated_category": "hearing",
+    "documents": {
+      "national_id_copy": "on file",
+      "personal_photo": "on file",
+      "medical_report": {
+        "date": "2026-08-18",
+        "issuer": "Licensed audiology clinic",
+        "summary": "Bilateral profound sensorineural hearing loss, permanent"
+      }
+    }
+  },
+  "A-1002": {
+    "applicant": "Test Applicant Two",
+    "national_id": "NID-1985-0000002-2",
+    "phone": "+00 55 000 0002",
+    "email": "applicant2@example.ae",
+    "residency": "resident, valid national ID",
+    "stated_condition": "Low vision following retinal disease",
+    "stated_category": "visual",
+    "documents": {
+      "national_id_copy": "on file",
+      "personal_photo": "on file",
+      "medical_report": {
+        "date": "2024-11-16",
+        "issuer": "Licensed eye hospital",
+        "summary": "Permanent visual impairment, best corrected acuity 6/60"
+      }
+    }
+  },
+  "A-1003": {
+    "applicant": "Test Applicant Three",
+    "national_id": "NID-1998-0000003-3",
+    "phone": "+00 52 000 0003",
+    "email": "applicant3@example.ae",
+    "residency": "resident, valid national ID",
+    "stated_condition": "Fractured leg from a sports injury, in a cast for eight weeks",
+    "stated_category": "physical",
+    "documents": {
+      "national_id_copy": "on file",
+      "personal_photo": "on file",
+      "medical_report": {
+        "date": "2026-09-27",
+        "issuer": "Licensed hospital",
+        "summary": "Tibial fracture, expected full recovery within three months"
+      }
+    }
+  },
+  "A-1004": {
+    "applicant": "Test Applicant Four",
+    "national_id": "NID-2010-0000004-4",
+    "phone": "+00 56 000 0004",
+    "email": "guardian4@example.ae",
+    "residency": "resident, valid national ID",
+    "stated_condition": "Autism spectrum disorder, diagnosed age four",
+    "stated_category": "autism spectrum",
+    "documents": {
+      "national_id_copy": "on file",
+      "medical_report": {
+        "date": "2026-06-19",
+        "issuer": "Licensed child development centre",
+        "summary": "Autism spectrum disorder, level 2 support needs"
+      }
+    }
+  },
+  "A-1005": {
+    "applicant": "Test Applicant Five",
+    "national_id": "NID-1979-0000005-5",
+    "phone": "+00 50 000 0005",
+    "email": "applicant5@example.ae",
+    "residency": "resident, valid national ID",
+    "stated_condition": "Schizophrenia, under long-term psychiatric treatment",
+    "stated_category": "psychosocial",
+    "documents": {
+      "national_id_copy": "on file",
+      "personal_photo": "on file",
+      "medical_report": {
+        "date": "2026-02-15",
+        "issuer": "Licensed psychiatric hospital",
+        "summary": "Chronic schizophrenia, long-term condition, stable on treatment"
+      }
+    }
+  },
+  "A-1006": {
+    "applicant": "Test Applicant Six",
+    "national_id": "NID-1988-0000006-6",
+    "phone": "+00 52 000 0006",
+    "email": "applicant6@example.ae",
+    "residency": "resident, valid national ID",
+    "stated_condition": "Cerebral palsy since birth, uses a wheelchair",
+    "stated_category": "physical",
+    "documents": {
+      "national_id_copy": "on file",
+      "personal_photo": "on file",
+      "medical_report": {
+        "date": "2026-07-02",
+        "issuer": "Private clinic in Cairo, Egypt",
+        "summary": "Cerebral palsy, permanent motor impairment"
+      }
+    }
+  }
+}

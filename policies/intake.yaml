@@ -1,0 +1,14 @@
+# Intake agent (low privilege): reads documents, may reach only the local model and the orchestrator.
+agent: intake
+label: baseline
+rules:
+  - id: intake-local-model
+    purpose: Use the local model
+    host: "127.0.0.1:11434"
+    methods: [POST]
+    paths: ["/v1/chat/completions"]
+  - id: intake-handoff
+    purpose: Hand cases to other agents through the orchestrator
+    host: "orchestrator.localhost:8783"
+    methods: [POST]
+    paths: ["/handoff"]

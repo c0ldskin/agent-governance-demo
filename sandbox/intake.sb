@@ -1,0 +1,38 @@
+;; Seatbelt profile: Intake agent (low privilege).
+;; Launched by the orchestrator as: sandbox-exec -f sandbox/intake.sb -D ROOT=... -D WORKSPACE=... -D TRACE_FILE=... python agents/agent.py
+;; Default deny. The process may run Python, read only its own folders, write only its own trace file,
+;; and open exactly one network connection target: the governance gateway on 127.0.0.1:8780.
+(version 1)
+(deny default)
+(import "system.sb")
+
+;; Run Python (the Homebrew interpreter the project's .venv points at). No other programs.
+(allow process-exec (subpath "/opt/homebrew/Cellar/python@3.14") (subpath "/opt/homebrew/opt/python@3.14"))
+(allow sysctl-read)
+
+;; Reads: the OS and Python runtime (read-only), the agent code and libraries, and this run's own workspace.
+(allow file-read-metadata)
+(allow file-read*
+  (subpath "/System") (subpath "/usr/lib") (subpath "/usr/share") (subpath "/private/var/db/timezone")
+  (subpath "/opt/homebrew/Cellar/python@3.14") (subpath "/opt/homebrew/opt/python@3.14")
+  (subpath "/opt/homebrew/Cellar/openssl@4") (subpath "/opt/homebrew/opt/openssl@4")
+  (subpath "/opt/homebrew/Cellar/zstd") (subpath "/opt/homebrew/opt/zstd")
+  (subpath "/opt/homebrew/Cellar/sqlite") (subpath "/opt/homebrew/opt/sqlite")
+  (subpath "/opt/homebrew/Cellar/mpdecimal") (subpath "/opt/homebrew/opt/mpdecimal")
+  (subpath "/opt/homebrew/Cellar/xz") (subpath "/opt/homebrew/opt/xz")
+  (literal "/dev/null") (literal "/dev/urandom") (literal "/dev/random")
+  (subpath (string-append (param "ROOT") "/.venv"))
+  (subpath (string-append (param "ROOT") "/agents"))
+  (subpath (param "WORKSPACE")))
+
+;; Never: the credentials, other agents' tokens, the policies, the logs.
+(deny file-read*
+  (subpath (string-append (param "ROOT") "/secrets"))
+  (subpath (string-append (param "ROOT") "/policies"))
+  (literal (string-append (param "ROOT") "/run/tokens.json")))
+
+;; Writes: only this agent's own trace file.
+(allow file-write* (literal (param "TRACE_FILE")) (literal "/dev/null"))
+
+;; Network: only the governance gateway. Direct calls to anything else fail with "Operation not permitted".
+(allow network-outbound (remote ip "localhost:8780"))

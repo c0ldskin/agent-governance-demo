@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Governance</title>
+<link rel="stylesheet" href="/static/guide.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="title">Agent Governance</div>
+    <div class="sub">A step-by-step demo · disability support card · everything runs on this laptop</div>
+  </div>
+  <div id="timer" class="timer hidden"><span id="timer-who"></span><b id="timer-secs"></b></div>
+  <div class="head-actions">
+    <a href="/detail" class="link" title="The detailed three-panel view, with every raw log line">Detailed view</a>
+    <button id="btn-reset" title="Restore the baseline policies, clear the screen, stop any agent">Reset</button>
+    <button id="btn-close" class="ghost">Close</button>
+  </div>
+</header>
+
+<nav id="chapters" class="chapters"></nav>
+
+<main>
+  <section class="left">
+    <div class="diagram-wrap">
+      <svg id="diagram" viewBox="0 0 960 520" role="img" aria-label="Agents, gateway and destinations"></svg>
+    </div>
+    <div id="layers-strip" class="layers-strip"></div>
+    <div id="explain" class="explain"></div>
+  </section>
+  <section class="right">
+    <div id="chapter" class="chapter"></div>
+  </section>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/guide.js"></script>
+</body>
+</html>

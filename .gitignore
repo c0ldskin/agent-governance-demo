@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+logs/*
+!logs/.gitkeep
+run/
+secrets/
+_to_delete/
+.DS_Store
+node_modules/
+presentation/build/
+ui-next/dist/

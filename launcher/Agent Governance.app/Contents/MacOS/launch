@@ -1,0 +1,118 @@
+#!/bin/zsh
+# Agent Governance (macOS): the only supported way to run the demo. Starts the local model if needed, then the
+# gateway, mocks, orchestrator and UI (waiting for each health check), opens the UI, and stops everything in
+# reverse order when the UI closes (Close button, or 5 minutes after the browser window is gone, never mid-run).
+# Expects the project at ~/agent-governance (override with GOV_DEMO_HOME).
+ROOT="${GOV_DEMO_HOME:-$HOME/agent-governance}"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export OLLAMA_HOST=http://127.0.0.1:11434 OLLAMA_KEEP_ALIVE=5m APP_LAUNCHER=desktop
+OWNER="$HOME/.local/share/agent-governance/ollama-launcher.pid"   # set when this launcher started Ollama itself
+PORT=8776; URL="http://127.0.0.1:$PORT/"
+DEMO_PORTS=(8776 8780 8781 8782 8783 8784)                  # UI, gateway, registry, attacker, orchestrator, cloud mock
+MODEL=${DEMO_MODEL:-qwen3:8b}
+LOGS="$ROOT/logs"; LOG="$LOGS/launcher.log"; PY="$ROOT/.venv/bin/python"
+log() { echo "$(date '+%F %T') $*" >> "$LOG"; }
+alert() { osascript -e "display alert \"Agent Governance\" message \"$1\"" >/dev/null 2>&1; }
+note() { osascript -e "display notification \"$1\" with title \"Agent Governance\"" >/dev/null 2>&1; }
+open_ui() { if [ -d "/Applications/Microsoft Edge.app" ]; then open -na "Microsoft Edge" --args --app="$URL"; else open "$URL"; fi; }
+get() { curl -s -m 2 --noproxy '*' "$1" >/dev/null; }
+up() { get "${URL}api/ping"; }
+
+# Started from Finder (or `open`), macOS's launchd is the parent and no terminal is attached. Anything else is refused.
+if [ $PPID -ne 1 ] || [ -t 0 ] || [ -t 1 ]; then
+  echo "Start this demo from its desktop app (Agent Governance on the Desktop), not from a terminal."; exit 2
+fi
+mkdir -p "$LOGS"; log "launch"
+if up; then open_ui; exit 0; fi
+[ -d "$ROOT" ] || { alert "The demo was not found at $ROOT."; exit 1; }
+OLLAMA=$(command -v ollama) || { alert "Ollama is not installed."; exit 1; }
+if [ ! -x "$PY" ]; then
+  note "First run: setting up the demo's Python libraries..."
+  (cd "$ROOT" && UV_PYTHON_DOWNLOADS=never uv sync --python /opt/homebrew/opt/python@3.14/bin/python3.14 >> "$LOG" 2>&1) \
+    || { alert "Setting up the Python libraries failed. See logs/launcher.log."; exit 1; }
+fi
+
+# Memory: warn (don't block) when there isn't room for the model, naming the heaviest apps.
+if ! curl -s -m 2 $OLLAMA_HOST/api/ps 2>/dev/null | grep -q "\"$MODEL\""; then
+  # Available = total minus what Activity Monitor calls Memory Used (app memory, wired, compressed). File cache
+  # counts as available: macOS hands it back the moment an app needs it.
+  PAGE=$(sysctl -n hw.pagesize); TOTAL=$(sysctl -n hw.memsize)
+  FREE_MB=$(vm_stat | awk -v p=$PAGE -v t=$TOTAL '{gsub("\\.","",$NF)} /^Anonymous pages/ {a=$NF} /^Pages purgeable/ {g=$NF}
+    /^Pages wired down/ {w=$NF} /^Pages occupied by compressor/ {c=$NF} END {print int((t - (a - g + w + c) * p) / 1048576)}')
+  if [ "$FREE_MB" -lt 6000 ]; then
+    HEAVY=$(ps -axo rss=,comm= | sort -rn | head -40 | awk '{n=$0; sub(/^ *[0-9]+ +/,"",n); sub(/.*\//,"",n); sub(/ Helper.*/,"",n); m[n]+=$1} END {for (k in m) printf "%d %s\n", m[k]/1024, k}' | sort -rn | head -4 | awk '{printf "%s (%d MB), ", substr($0, index($0,$2)), $1}')
+    log "low memory: ${FREE_MB} MB available; heaviest: $HEAVY"
+    (alert "Memory is low (${FREE_MB} MB available). The local model needs about 5.5 GB. Heaviest apps: ${HEAVY%, }. The demo will still start." &)
+  fi
+fi
+
+note "Starting the local model and the demo..."
+STARTED_OLLAMA=0; PIDS=()
+teardown() {   # reverse order: UI, orchestrator (and its agents), mocks, gateway
+  for (( i=${#PIDS}; i>0; i-- )); do kill ${PIDS[$i]} 2>/dev/null; done
+  for (( i=${#PIDS}; i>0; i-- )); do
+    for n in {1..20}; do kill -0 ${PIDS[$i]} 2>/dev/null || break; sleep 0.25; done
+    kill -9 ${PIDS[$i]} 2>/dev/null
+  done
+  pkill -9 -f "$ROOT/agents/" 2>/dev/null
+}
+fail() {
+  log "$1 failed"; alert "The $1 did not start. See $2 in the demo folder."
+  teardown; [ $STARTED_OLLAMA = 1 ] && { kill $OLLAMA_PID; rm -f "$OWNER"; }; exit 1
+}
+if ! curl -s -m 2 $OLLAMA_HOST/api/tags >/dev/null; then
+  "$OLLAMA" serve >> "$LOGS/ollama.log" 2>&1 & OLLAMA_PID=$!; STARTED_OLLAMA=1
+  mkdir -p "${OWNER:h}"; echo $OLLAMA_PID > "$OWNER"   # a demo launcher started it: the last demo to close stops it
+  for i in {1..30}; do curl -s -m 2 $OLLAMA_HOST/api/tags >/dev/null && break; sleep 1; done
+fi
+if ! curl -s $OLLAMA_HOST/api/tags | grep -q "\"$MODEL\""; then
+  log "model $MODEL missing"; alert "The model $MODEL is not installed."
+  [ $STARTED_OLLAMA = 1 ] && { kill $OLLAMA_PID; rm -f "$OWNER"; }; exit 1
+fi
+curl -s -m 60 $OLLAMA_HOST/api/generate -d "{\"model\":\"$MODEL\",\"keep_alive\":\"10m\"}" >/dev/null &   # warm the model
+
+cd "$ROOT"
+start() {   # name, script, health URL, log file
+  "$PY" -B "$ROOT/$2" ${@:5} >> "$LOGS/$4" 2>&1 & local pid=$!; PIDS+=($pid)
+  for i in {1..60}; do get "$3" && return 0; kill -0 $pid 2>/dev/null || break; sleep 0.5; done
+  fail "$1" "logs/$4"
+}
+start gateway gateway/gateway.py "http://127.0.0.1:8780/_health" gateway.log
+start "mock services" mocks/services.py "http://127.0.0.1:8781/health" server.log
+start orchestrator orchestrator/orchestrator.py "http://127.0.0.1:8783/health" server.log
+start UI ui/server.py "${URL}api/ping" server.log --idle-exit 300
+UI_PID=${PIDS[-1]}
+log "running (model $MODEL, pids ${PIDS[*]})"; open_ui
+wait $UI_PID
+log "UI closed; stopping"
+teardown
+
+# Stop Ollama only if this launcher started it (an Ollama you started yourself has no owner file and is left
+# alone), and not while another app that shares it is up. List those apps' ports in GOV_SHARED_OLLAMA_PORTS.
+OTHERS=0
+for p in ${=GOV_SHARED_OLLAMA_PORTS:-}; do get "http://127.0.0.1:$p/api/ping" && OTHERS=1; done
+if [ $OTHERS = 1 ]; then
+  log "another demo is still running; leaving Ollama and the model loaded"
+else
+  "$OLLAMA" stop "$MODEL" >/dev/null 2>&1
+  if [ -f "$OWNER" ]; then
+    OP=$(cat "$OWNER")
+    if ps -o command= -p "$OP" 2>/dev/null | grep -q "ollama serve"; then
+      kill "$OP" 2>/dev/null
+      for i in {1..40}; do kill -0 "$OP" 2>/dev/null || break; sleep 0.5; done
+    fi
+    rm -f "$OWNER"
+  fi
+fi
+
+# Check that nothing of this demo is left.
+LEFT=()
+for p in $DEMO_PORTS; do lsof -nP -iTCP:$p -sTCP:LISTEN >/dev/null 2>&1 && LEFT+=("port $p"); done
+# (the kit's design server, ui-next on 5180, is a development tool and not part of the demo)
+STRAY=$(ps -axo pid=,command= | grep -F "$ROOT/" | grep -v -e "/ui-next" -e "grep" | awk '{print $1}' | tr '\n' ' ')
+[ -n "$STRAY" ] && LEFT+=("processes: $STRAY")
+if [ ${#LEFT} = 0 ]; then
+  note "Stopped cleanly. Nothing of the demo is left running."; log "stopped cleanly"
+else
+  note "Stopped, but still running: ${LEFT[*]}"; log "stopped; still running: ${LEFT[*]}"
+fi

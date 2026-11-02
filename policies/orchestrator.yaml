@@ -1,0 +1,3 @@
+# Orchestrator settings for handoffs between agents.
+# delegation_check: refuse a handoff that asks an agent to do something the originating agent may not do.
+delegation_check: false

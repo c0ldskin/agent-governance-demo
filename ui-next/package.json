@@ -1,0 +1,22 @@
+{
+  "name": "agent-governance-ui-next",
+  "private": true,
+  "description": "Design mock: the Agent Governance screen in React and React Flow. No back end; a scripted replay of a real governed run.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5180 --strictPort",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@xyflow/react": "12.12.0",
+    "lucide-react": "1.57.0",
+    "motion": "14.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.4"
+  }
+}
