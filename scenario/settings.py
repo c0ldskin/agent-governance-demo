@@ -57,5 +57,5 @@ def gateway_secret() -> str:
 
 def require_desktop_launcher(name: str):
     if os.getenv("APP_LAUNCHER") != "desktop":
-        print(f"{name}: start this demo from its desktop app (Agent Governance), not from a terminal.", flush=True)
+        print(f"{name}: start this demo from its desktop app (Agent Governance Demo), not from a terminal.", flush=True)
         sys.exit(2)

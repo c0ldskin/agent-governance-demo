@@ -82,12 +82,13 @@ How a governed request flows: an agent process (Seatbelt) sends `HTTP_PROXY` to 
 ## Quick start
 
 ```bash
-git clone <this repo> ~/agent-governance
-cd ~/agent-governance
-launcher/install-desktop.sh
+git clone https://github.com/c0ldskin/agent-governance-demo.git ~/agent-governance-demo
+cd ~/agent-governance-demo
+./check.sh                    # read-only: tells you what's missing, installs nothing
+launcher/install-desktop.sh   # puts "Agent Governance Demo" on your Desktop
 ```
 
-Then double-click **Agent Governance** on the Desktop. The first start runs `uv sync` to create `.venv`, and generates a random fake API key into `secrets/` (git ignores it).
+Then double-click **Agent Governance Demo** on the Desktop. The first start runs `uv sync` to create `.venv`, and generates a random fake API key into `secrets/` (git ignores it).
 
 - **Start:** the Desktop app is the only supported way. It:
   - refuses to start from a terminal;
@@ -97,6 +98,7 @@ Then double-click **Agent Governance** on the Desktop. The first start runs `uv 
   - opens the page in an Edge app window if Edge is installed, otherwise in your default browser.
 - **Stop:** press **Close** in the page. The demo also stops itself 5 minutes after the browser window has gone, but never during a run. It stops everything in reverse order, stops Ollama only if this launcher started it, checks that no demo process or port is left, and shows a notification. If other apps on your Mac share the same Ollama, list their ports in `GOV_SHARED_OLLAMA_PORTS` and it will leave Ollama running while they're up.
 - **Reinstall the Desktop app** after changing the launcher: `launcher/install-desktop.sh`.
+- **One copy at a time.** The demo uses fixed local ports (below), so only one copy can run at once. `./check.sh` tells you if they're busy.
 - **Uninstall:** `launcher/uninstall.sh` moves the Desktop app and this folder to `~/agent-governance-trash` instead of deleting them. It never touches Ollama or the model.
 
 | Port | What |

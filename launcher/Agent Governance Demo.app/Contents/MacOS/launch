@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Agent Governance (macOS): the only supported way to run the demo. Starts the local model if needed, then the
+# Agent Governance Demo (macOS): the only supported way to run the demo. Starts the local model if needed, then the
 # gateway, mocks, orchestrator and UI (waiting for each health check), opens the UI, and stops everything in
 # reverse order when the UI closes (Close button, or 5 minutes after the browser window is gone, never mid-run).
 # Expects the project at ~/agent-governance (override with GOV_DEMO_HOME).
@@ -12,15 +12,15 @@ DEMO_PORTS=(8776 8780 8781 8782 8783 8784)                  # UI, gateway, regis
 MODEL=${DEMO_MODEL:-qwen3:8b}
 LOGS="$ROOT/logs"; LOG="$LOGS/launcher.log"; PY="$ROOT/.venv/bin/python"
 log() { echo "$(date '+%F %T') $*" >> "$LOG"; }
-alert() { osascript -e "display alert \"Agent Governance\" message \"$1\"" >/dev/null 2>&1; }
-note() { osascript -e "display notification \"$1\" with title \"Agent Governance\"" >/dev/null 2>&1; }
+alert() { osascript -e "display alert \"Agent Governance Demo\" message \"$1\"" >/dev/null 2>&1; }
+note() { osascript -e "display notification \"$1\" with title \"Agent Governance Demo\"" >/dev/null 2>&1; }
 open_ui() { if [ -d "/Applications/Microsoft Edge.app" ]; then open -na "Microsoft Edge" --args --app="$URL"; else open "$URL"; fi; }
 get() { curl -s -m 2 --noproxy '*' "$1" >/dev/null; }
 up() { get "${URL}api/ping"; }
 
 # Started from Finder (or `open`), macOS's launchd is the parent and no terminal is attached. Anything else is refused.
 if [ $PPID -ne 1 ] || [ -t 0 ] || [ -t 1 ]; then
-  echo "Start this demo from its desktop app (Agent Governance on the Desktop), not from a terminal."; exit 2
+  echo "Start this demo from its desktop app (Agent Governance Demo on the Desktop), not from a terminal."; exit 2
 fi
 mkdir -p "$LOGS"; log "launch"
 if up; then open_ui; exit 0; fi
